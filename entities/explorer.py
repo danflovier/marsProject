@@ -9,7 +9,7 @@ class Explorer(DrawableEntity):
     SIZE = 7
     MAX_VELOCITY = 1.3
     PICKUP_REACH = 1
-    SENSOR_RANGE = 15
+    SENSOR_RANGE = 30
     MAX_NEW_DIRECTION_ATTEMPTS = 5
     SENSE_DELAY = 100
     COLOR = 'blue'
@@ -59,36 +59,34 @@ class Explorer(DrawableEntity):
 
         #avoid obstacles | 1
         if not self._can_move():
- 
             new_direction_attempts = 0
             while not self._can_move() and new_direction_attempts < self.MAX_NEW_DIRECTION_ATTEMPTS:
                 self.dx, self.dy = self._get_new_direction()
                 new_direction_attempts+=1
-
 
         #samples and on the ship | 2
         elif self.has_rock and self._drop_available():
             self.has_rock = False
             self.world.rock_collected()
             return
-
+        #samples and not on the ship | 3
         elif self.has_rock:
             self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
+            while not self._can_move():
+                self.dx, self.dy = self._get_new_direction()
+        #sample detection | 4
         else:
-            # Pick up.
             rock = self._rock_available()
             if rock:
                 self.has_rock = True
                 self.world.remove_entity(rock)
                 return
-
             # Head towards rock.
             rock = self._sense_rock()
             if rock:
                 self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
 
-        # Keep walkin'.
-        
+        #nothing | 5
         self._move()
 
     def _move(self):
