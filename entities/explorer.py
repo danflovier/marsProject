@@ -12,7 +12,7 @@ class Explorer(DrawableEntity):
     MAX_VELOCITY = 1.3
     PICKUP_REACH = 1
     SENSOR_RANGE = 15
-    PARTICLE_SENSOR_RANGE = 60
+    PARTICLE_SENSOR_RANGE = 100
     MAX_NEW_DIRECTION_ATTEMPTS = 5
     SENSE_DELAY = 100
     COLOR = 'blue'
@@ -87,8 +87,7 @@ class Explorer(DrawableEntity):
         #samples and not on the ship | 3
         elif self.has_rock:
             self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
-            while not self._can_move():
-                self.dx, self.dy = self._get_new_direction()
+            
 
             #if rock detected and full 
             rock = self._rock_available()
