@@ -57,37 +57,59 @@ class Explorer(DrawableEntity):
 
     def _tick(self):
 
-        #avoid obstacles | 1
+        # 1 | avoid obstacles
         if not self._can_move():
-            new_direction_attempts = 0
-            while not self._can_move() and new_direction_attempts < self.MAX_NEW_DIRECTION_ATTEMPTS:
-                self.dx, self.dy = self._get_new_direction()
-                new_direction_attempts+=1
+            self._agent_avoid_obstacles()
 
-        #samples and on the ship | 2
+        # 2 | samples and on the ship
         elif self.has_rock and self._drop_available():
-            self.has_rock = False
-            self.world.rock_collected()
-            return
-        #samples and not on the ship | 3
+            self._agent_drop_sample()
+        
+        # 3 | samples and not on the ship
         elif self.has_rock:
-            self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
-            while not self._can_move():
-                self.dx, self.dy = self._get_new_direction()
-        #sample detection | 4
+            self._agent_go_to_ship()
+        
+        #4 | sample detection
         else:
-            rock = self._rock_available()
-            if rock:
-                self.has_rock = True
-                self.world.remove_entity(rock)
-                return
-            # Head towards rock.
-            rock = self._sense_rock()
-            if rock:
-                self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
+            self._agent_pick()
 
-        #nothing | 5
-        self._move()
+        #5 | nothing
+        self._agent_move()
+
+    # avoid obstacles | 1
+    def _agent_avoid_obstacles(self):
+    	new_direction_attempts = 0
+    	while not self._can_move() and new_direction_attempts < self.MAX_NEW_DIRECTION_ATTEMPTS:
+    		self.dx, self.dy = self._get_new_direction()
+    		new_direction_attempts+=1
+
+    # samples and on the ship | 2
+    def _agent_drop_sample(self):
+    	self.has_rock = False
+    	self.world.rock_collected()
+    	return
+
+    # samples and not on the ship | 3
+    def _agent_go_to_ship(self):
+        self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
+        while not self._can_move():
+        	self.dx, self.dy = self._get_new_direction()
+    
+    # sample detection | 4
+    def _agent_pick(self):
+        rock = self._rock_available()
+        if rock:
+            self.has_rock = True
+            self.world.remove_entity(rock)
+            return
+        # Head towards rock.
+        rock = self._sense_rock()
+        if rock:
+            self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
+
+    # nothing | 5
+    def _agent_move(self):
+    	self._move()
 
     def _move(self):
         self.x += self.dx
