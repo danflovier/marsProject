@@ -3,6 +3,7 @@ from entities.drawable_entity import DrawableEntity
 from entities.explorer import Explorer
 from entities.mars_base import MarsBase
 from entities.obstacle import Obstacle
+from entities.particle import Particle
 from entities.rock import Rock
 
 
@@ -18,6 +19,7 @@ class World(DrawableEntity):
         self.obstacles = []
         self.explorers = []
         self.carriers = []
+        self.particles = []
         self.mars_base = None
         self.num_rocks = num_rocks
         self.rocks_collected = 0
@@ -47,6 +49,9 @@ class World(DrawableEntity):
             self.explorers.append(entity)
         elif isinstance(entity, MarsBase):
             self.mars_base = entity
+        elif isinstance(entity, Particle):
+             self.particles.append(entity)
+        
 
     def remove_entity(self, entity):
         assert isinstance(entity, DrawableEntity)
@@ -64,6 +69,8 @@ class World(DrawableEntity):
             self.explorers.remove(entity)
         elif isinstance(entity, MarsBase):
             self.mars_base = None
+        elif isinstance(entity, Particle):
+            self.particles.remove(entity)
 
     def is_done(self):
         return self.rocks_collected == self.num_rocks
