@@ -2,6 +2,8 @@ import random
 
 from entities.drawable_entity import DrawableEntity
 from entities.message import MESSAGE_WAIT, ComeMessage
+from entities.particle import Particle
+from entities.rock import Rock
 from utils import rect_in_world, rects_are_overlapping, normalize
 
 
@@ -9,12 +11,14 @@ class Explorer(DrawableEntity):
     SIZE = 7
     MAX_VELOCITY = 1.3
     PICKUP_REACH = 1
-    SENSOR_RANGE = 30
+    SENSOR_RANGE = 15
+    PARTICLE_SENSOR_RANGE = 60
     MAX_NEW_DIRECTION_ATTEMPTS = 5
     SENSE_DELAY = 100
     COLOR = 'blue'
     HAS_ROCK_COLOR = 'yellow'
     SENSOR_COLOR = 'yellow'
+    PARTICLE_SENSOR_COLOR = 'red'
 
     def __init__(self, x, y, world):
         self.x = x
@@ -24,6 +28,8 @@ class Explorer(DrawableEntity):
         self.ticks = 0
         self.has_rock = False
         self.inbox = []
+        self.initial_drop_tick = 0
+        self.tick_range_drop_particles = 10
 
     def draw(self, canvas):
         helper = Explorer(self.x, self.y, self.world)
@@ -34,6 +40,15 @@ class Explorer(DrawableEntity):
                            bottom_right.x,
                            bottom_right.y,
                            outline=self.SENSOR_COLOR)
+
+        helper = Explorer(self.x, self.y, self.world)
+        helper.SIZE = 2 * self.PARTICLE_SENSOR_RANGE + self.SIZE
+        top_left, bottom_right = helper.get_bounds()
+        canvas.create_oval(top_left.x,
+                           top_left.y,
+                           bottom_right.x,
+                           bottom_right.y,
+                           outline=self.PARTICLE_SENSOR_COLOR)
 
         top_left, bottom_right = self.get_bounds()
         canvas.create_rectangle(top_left.x,
@@ -133,6 +148,11 @@ class Explorer(DrawableEntity):
             # Allow collisions with other explorers.
             if isinstance(other, Explorer):
                 continue
+            #Allow collisions with particles
+            if isinstance(other, Particle):
+                continue
+            if isinstance(other, Rock):
+                continue
 
             if rects_are_overlapping(bounds, other.get_bounds()):
                 return False
@@ -148,6 +168,15 @@ class Explorer(DrawableEntity):
 
         return None
 
+    def _particle_available(self):
+        for particle in self.world.particles:
+            if rects_are_overlapping(self.get_bounds(),
+                                     particle.get_bounds(),
+                                     self.PICKUP_REACH):
+                return particle
+
+        return None
+
     def _sense_rock(self):
         # Wait a bit so that the explorers spread out.
         if self.ticks < self.SENSE_DELAY:
@@ -158,6 +187,16 @@ class Explorer(DrawableEntity):
                                      rock.get_bounds(),
                                      self.SENSOR_RANGE):
                 return rock
+
+        return None
+
+    def _sense_particle(self):
+
+        for particle in self.world.particles:
+            if rects_are_overlapping(self.get_bounds(),
+                                     particle.get_bounds(),
+                                     self.PARTICLE_SENSOR_RANGE):
+                return particle
 
         return None
 

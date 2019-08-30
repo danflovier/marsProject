@@ -3,7 +3,7 @@ from entities.drawable_entity import DrawableEntity
 
 class MarsBase(DrawableEntity):
     SIZE = 40
-    COLOR = 'green'
+    COLOR = 'blue'
 
     def __init__(self, world_width, world_height):
         self.x = world_width / 2
