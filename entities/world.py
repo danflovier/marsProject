@@ -10,10 +10,10 @@ from entities.rock import Rock
 class World(DrawableEntity):
     COLOR = '#804C1A'
 
-    def __init__(self, width, height, num_rocks):
+    def __init__(self, width, height, num_rocks, tp):
         self.width = width
         self.height = height
-
+        self.type = tp
         self.entities = []
         self.rocks = []
         self.obstacles = []

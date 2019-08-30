@@ -40,16 +40,16 @@ class Explorer(DrawableEntity):
                            bottom_right.x,
                            bottom_right.y,
                            outline=self.SENSOR_COLOR)
-
-        helper = Explorer(self.x, self.y, self.world)
-        helper.SIZE = 2 * self.PARTICLE_SENSOR_RANGE + self.SIZE
-        top_left, bottom_right = helper.get_bounds()
-        canvas.create_oval(top_left.x,
-                           top_left.y,
-                           bottom_right.x,
-                           bottom_right.y,
-                           outline=self.PARTICLE_SENSOR_COLOR)
-
+        if self.world.type:
+            helper = Explorer(self.x, self.y, self.world)
+            helper.SIZE = 2 * self.PARTICLE_SENSOR_RANGE + self.SIZE
+            top_left, bottom_right = helper.get_bounds()
+            canvas.create_oval(top_left.x,
+                            top_left.y,
+                            bottom_right.x,
+                            bottom_right.y,
+                            outline=self.PARTICLE_SENSOR_COLOR)
+        
         top_left, bottom_right = self.get_bounds()
         canvas.create_rectangle(top_left.x,
                                 top_left.y,
@@ -72,60 +72,91 @@ class Explorer(DrawableEntity):
 
     def _tick(self):
 
-        #avoid obstacles | 1
+        # 1 | avoid obstacles
         if not self._can_move():
-            new_direction_attempts = 0
-            while not self._can_move() and new_direction_attempts < self.MAX_NEW_DIRECTION_ATTEMPTS:
-                self.dx, self.dy = self._get_new_direction()
-                new_direction_attempts+=1
+            self._agent_avoid_obstacles()
+            self._agent_move()
 
-        #samples and on the ship | 2
+        # 2 | samples and on the ship
         elif self.has_rock and self._drop_available():
-            self.has_rock = False
-            self.world.rock_collected()
-            return
-        #samples and not on the ship | 3
+            self._agent_drop_sample()
+            self._agent_move()
+        
+        # 3 | samples and not on the ship
         elif self.has_rock:
-            self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
-            
-
-            #if rock detected and full 
-            rock = self._rock_available()
-            if rock:
-                #drop a particle
-                if self.tick_range_drop_particles < self.ticks - self.initial_drop_tick:
-                    particle = Particle.generate_particle(self.x, self.y)
-                    self.world.add_entity(particle)
-                    self.initial_drop_tick = self.ticks
-
-        #sample detection | 4
+            self._agent_go_to_ship()
+            self._agent_move()
+        
+        #4 | sample detection
         elif self._sense_rock():
-            rock = self._rock_available()
-            if rock:
-                self.has_rock = True
-                self.world.remove_entity(rock)
+            self._agent_pick()
+            self._agent_move()
+        #5 | particle detection
+        elif self._sense_particle() and self.world.type:
+            self._agent_particle()
+            self._agent_move()
+        #6 | nothing
+        else:
+            self._agent_move()
 
-                #drop a particle
+
+
+    # avoid obstacles | 1
+    def _agent_avoid_obstacles(self):
+    	new_direction_attempts = 0
+    	while not self._can_move() and new_direction_attempts < self.MAX_NEW_DIRECTION_ATTEMPTS:
+    		self.dx, self.dy = self._get_new_direction()
+    		new_direction_attempts+=1
+
+    # samples and on the ship | 2
+    def _agent_drop_sample(self):
+    	self.has_rock = False
+    	self.world.rock_collected()
+    	return
+
+    # samples and not on the ship | 3
+    def _agent_go_to_ship(self):
+        self.dx, self.dy = normalize(self.world.mars_base.x - self.x,self.world.mars_base.y - self.y)
+        #if rock detected and full 
+        rock = self._rock_available()
+
+        if rock and self.world.type:
+            #drop a particle
+            if self.tick_range_drop_particles < self.ticks - self.initial_drop_tick:
                 particle = Particle.generate_particle(self.x, self.y)
                 self.world.add_entity(particle)
-                return
-            # Head towards rock.
-            rock = self._sense_rock()
-            if rock:
-                self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
+                self.initial_drop_tick = self.ticks
+    
+    # sample detection | 4
+    def _agent_pick(self):
+        rock = self._rock_available()
+        if rock:
+            self.has_rock = True
+            self.world.remove_entity(rock)
 
-        else:
+            #drop a particle
+            if self.world.type:
+                particle = Particle.generate_particle(self.x, self.y)
+                self.world.add_entity(particle)
+            
+            return
+        # Head towards rock.
+        rock = self._sense_rock()
+        if rock:
+            self.dx, self.dy = normalize(rock.x - self.x, rock.y - self.y)
+    # particle detection | 5
+    def _agent_particle(self):
+        particle = self._particle_available()
+        if particle:
+            self.world.remove_entity(particle)
+            return
 
-            particle = self._particle_available()
-            if particle:
-                self.world.remove_entity(particle)
-                return
-
-            particle = self._sense_particle()
-            if particle:
-                self.dx, self.dy = normalize(particle.x - self.x, particle.y - self.y)
-        #nothing | 5
-        self._move()
+        particle = self._sense_particle()
+        if particle:
+            self.dx, self.dy = normalize(particle.x - self.x, particle.y - self.y)
+    # nothing | 6
+    def _agent_move(self):
+    	self._move()
 
     def _move(self):
         self.x += self.dx
