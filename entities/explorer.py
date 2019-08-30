@@ -55,6 +55,7 @@ class Explorer(DrawableEntity):
                                 top_left.y,
                                 bottom_right.x,
                                 bottom_right.y,
+                                outline="",
                                 fill=self.HAS_ROCK_COLOR if self.has_rock else self.COLOR)
 
     def clear_inbox(self):

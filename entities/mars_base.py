@@ -14,4 +14,5 @@ class MarsBase(DrawableEntity):
                                 self.y - self.SIZE / 2,
                                 self.x + self.SIZE / 2,
                                 self.y + self.SIZE / 2,
-                                fill=self.COLOR)
+                                fill=self.COLOR,
+                                outline="")

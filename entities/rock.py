@@ -18,7 +18,8 @@ class Rock(DrawableEntity):
                            top_left.y,
                            bottom_right.x,
                            bottom_right.y,
-                           fill=self.COLOR)
+                           fill=self.COLOR,
+                           outline="")
 
     def has_room(self, world):
         """Checks whether self has room in world."""

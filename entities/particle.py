@@ -18,7 +18,8 @@ class Particle(DrawableEntity):
                            top_left.y,
                            bottom_right.x,
                            bottom_right.y,
-                           fill=self.COLOR)
+                           fill=self.COLOR,
+                           outline="")
 
 
     @staticmethod
